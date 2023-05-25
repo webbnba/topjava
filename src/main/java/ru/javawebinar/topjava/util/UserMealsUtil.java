@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.Month;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class UserMealsUtil {
     public static void main(String[] args) {
@@ -21,38 +22,51 @@ public class UserMealsUtil {
                 new UserMeal(LocalDateTime.of(2020, Month.JANUARY, 31, 20, 0), "Ужин", 410)
         );
 
-        List<UserMealWithExcess> mealsTo = filteredByCycles(meals, LocalTime.of(7, 0), LocalTime.of(12, 0), 2000);
+        List<UserMealWithExcess> mealsTo = filteredByStream(meals, LocalTime.of(7, 0), LocalTime.of(12, 0), 2000);
         mealsTo.forEach(System.out::println);
-
-//        System.out.println(filteredByStreams(meals, LocalTime.of(7, 0), LocalTime.of(12, 0), 2000));
     }
 
     public static List<UserMealWithExcess> filteredByCycles(List<UserMeal> meals, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
+        Map<LocalDate, Integer> mapOfCalories = new TreeMap<>();
         List<UserMealWithExcess> result = new ArrayList<>();
-        Map<LocalDateTime, Integer> sortedMap = new TreeMap<>(Comparator.comparing(LocalDateTime::toLocalDate));
-        int sumCalories = 0;
+
         for (UserMeal meal : meals) {
-            LocalTime lt = meal.getDateTime().toLocalTime();
-            sortedMap.put(meal.getDateTime(), meal.getCalories());
-            for(Map.Entry<LocalDateTime, Integer> entry : sortedMap.entrySet()) {
-                LocalDateTime dateTime = entry.getKey();
-                int calorie = entry.getValue();
-                LocalDateTime day = dateTime.toLocalDate().atStartOfDay();
+            LocalDate date = meal.getDateTime().toLocalDate();
+            mapOfCalories.merge(date, meal.getCalories(), Integer::sum);
+        }
 
-                
+        for (UserMeal meal : meals) {
+            LocalTime time = meal.getDateTime().toLocalTime();
+            if (TimeUtil.isBetweenHalfOpen(time, startTime, endTime)) {
+                LocalDate date = meal.getDateTime().toLocalDate();
+                int calorie = meal.getCalories();
+                boolean exceedsCalories = mapOfCalories.get(date) > caloriesPerDay;
+                result.add(new UserMealWithExcess(meal.getDateTime(), meal.getDescription(), calorie, exceedsCalories));
             }
-            if(TimeUtil.isBetweenHalfOpen(lt, startTime, endTime)) {
-                Integer calorie = sortedMap.getOrDefault(meal.getDateTime(), 0);
-                result.add(new UserMealWithExcess(meal.getDateTime(), meal.getDescription(), calorie, true));
-            }
-            int resultCalories = sortedMap.values().stream().reduce(0, Integer::sum);
-
         }
         return result;
     }
 
-    public static List<UserMealWithExcess> filteredByStreams(List<UserMeal> meals, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
-        // TODO Implement by streams
-        return null;
+    public static List<UserMealWithExcess> filteredByStream(List<UserMeal> meals, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
+        Map<LocalDate, Integer> mapDateAndCalories = meals.stream()
+                .collect(Collectors.groupingBy(
+                        meal -> meal.getDateTime().toLocalDate(),
+                        TreeMap::new,
+                        Collectors.summingInt(UserMeal::getCalories)
+                ));
+
+        return meals.stream()
+                .filter(meal -> TimeUtil.isBetweenHalfOpen(meal.getDateTime().toLocalTime(), startTime, endTime))
+                .map(meal -> {
+                    LocalDate localDate = meal.getDateTime().toLocalDate();
+                    boolean exceedsCalories = mapDateAndCalories.get(localDate) > caloriesPerDay;
+                    return new UserMealWithExcess(
+                            meal.getDateTime(),
+                            meal.getDescription(),
+                            meal.getCalories(),
+                            exceedsCalories
+                    );
+                })
+                .collect(Collectors.toList());
     }
 }
