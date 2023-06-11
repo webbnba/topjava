@@ -1,11 +1,10 @@
-<%@ page import="static ru.javawebinar.topjava.web.MealServlet.COUNTER" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt"%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <jsp:useBean id="meal" type="ru.javawebinar.topjava.model.Meal" scope="request"/>
+    <jsp:useBean id="meal" type="ru.javawebinar.topjava.model.MealTo" scope="request"/>
     <title>Edit meal</title>
 </head>
 <body>

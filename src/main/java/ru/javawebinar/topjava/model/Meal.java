@@ -3,14 +3,11 @@ package ru.javawebinar.topjava.model;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class Meal {
     private Integer id;
     private LocalDateTime dateTime;
-
     private String description;
-
     private int calories;
 
     public Meal() {

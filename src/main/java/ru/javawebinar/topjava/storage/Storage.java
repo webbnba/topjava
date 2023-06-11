@@ -7,13 +7,13 @@ import java.util.List;
 
 public interface Storage {
 
-    void addMeal(Meal meal);
+    Meal add(Meal meal);
 
-    void updateMeal(Meal meal);
+    Meal update(Meal meal);
 
-    void deleteMeal(Integer id);
+    void delete(int id);
 
-    Meal getMeal(Integer id);
+    Meal get(int id);
 
-    List<MealTo> getAllMeals();
+    List<Meal> getAllMeals();
 }
