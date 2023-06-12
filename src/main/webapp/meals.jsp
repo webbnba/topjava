@@ -5,42 +5,43 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Meals</title>
+    <title>Meal list</title>
     <style>
-        table, th, td {
-            border: 1px solid black;
-        }
         .excess {
             color: red;
         }
+
         .normal {
             color: green;
         }
     </style>
 </head>
 <body>
-<h1>Meals List</h1>
-<hr>
-<p><a href="meals?action=edit">Add Meal</a></p>
-
-<table>
-    <tr>
-        <th>Date/Time</th>
-        <th>Description</th>
-        <th>Calories</th>
-        <th colspan=2>Action</th>
-    </tr>
-    <jsp:useBean id="meals" scope="request" type="java.util.List"/>
-    <c:forEach items="${meals}" var="meal">
-        <tr class="${meal.excess ? 'excess' : 'normal'}">
-            <td>${meal.dateTime.format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH-mm"))}</td>
-            <td>${meal.description}</td>
-            <td>${meal.calories}</td>
-            <td><a href="meals?id=${meal.id}&action=delete">Delete</a></td>
-            <td><a href="meals?id=${meal.id}&action=edit">Edit</a></td>
+<section>
+    <h3><a href="index.html">Home</a></h3>
+    <hr/>
+    <h2>Meals</h2>
+    <a href="meals?action=create">Add Meal</a>
+    <br><br>
+    <table border="1" cellpadding="8" cellspacing="0">
+        <tr>
+            <th>Date/Time</th>
+            <th>Description</th>
+            <th>Calories</th>
+            <th colspan=2>Action</th>
         </tr>
-    </c:forEach>
-</table>
+        <c:forEach items="${requestScope.meals}" var="meal">
+            <jsp:useBean id="meal" type="ru.javawebinar.topjava.model.MealTo"/>
+            <tr class="${meal.excess ? 'excess' : 'normal'}">
+                <td>${meal.dateTime.format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH-mm"))}</td>
+                <td>${meal.description}</td>
+                <td>${meal.calories}</td>
+                <td><a href="meals?action=update&id=${meal.id}">Update</a></td>
+                <td><a href="meals?action=delete&id=${meal.id}">Delete</a></td>
+            </tr>
+        </c:forEach>
+    </table>
+</section>
 </body>
 </html>
 

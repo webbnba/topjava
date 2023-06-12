@@ -2,93 +2,76 @@ package ru.javawebinar.topjava.web;
 
 import org.slf4j.Logger;
 import ru.javawebinar.topjava.model.Meal;
-import ru.javawebinar.topjava.model.MealTo;
-import ru.javawebinar.topjava.storage.MealStorage;
-import ru.javawebinar.topjava.storage.Storage;
+import ru.javawebinar.topjava.repository.InMemoryMealRepository;
+import ru.javawebinar.topjava.repository.MealRepository;
+import ru.javawebinar.topjava.util.MealsUtil;
 
-import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.time.temporal.ChronoUnit;
+import java.util.Objects;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class MealServlet extends HttpServlet {
-    private final Storage storage = new MealStorage();
-    private static final String INSERT_OR_EDIT = "/editMeal.jsp";
-    private static final String LIST_USER = "/meals.jsp";
-    public static final int CALORIES_PER_DAY = 2000;
     private static final Logger log = getLogger(MealServlet.class);
+    private MealRepository repository;
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    public void init() {
+        repository = new InMemoryMealRepository();
+    }
+
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         req.setCharacterEncoding("UTF-8");
-        Meal meal = new Meal();
-        String dateTime = req.getParameter("dateTime");
-        meal.setDateTime(LocalDateTime.parse(dateTime));
-        meal.setDescription(req.getParameter("description"));
-        meal.setCalories(Integer.parseInt(req.getParameter("calories")));
         String id = req.getParameter("id");
-        if (id == null || id.isEmpty()) {
-            storage.add(meal);
-        } else {
-            meal.setId(MealStorage.generatedId());
-            storage.update(meal);
-        }
-        RequestDispatcher view = req.getRequestDispatcher(LIST_USER);
-        req.setAttribute("meals", storage.getAllMeals());
-        view.forward(req, resp);
+
+        Meal meal = new Meal(id.isEmpty() ? null : Integer.valueOf(id),
+                LocalDateTime.parse(req.getParameter("dateTime")),
+                req.getParameter("description"),
+                Integer.parseInt(req.getParameter("calories")));
+
+        log.info(meal.isNew() ? "Create {}" : "Update {}", meal);
+        repository.save(meal);
+        resp.sendRedirect("meals");
     }
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String forward = "";
         String action = request.getParameter("action");
 
-        if (action.equalsIgnoreCase("delete")) {
-            int id = Integer.parseInt(request.getParameter("id"));
-            storage.delete(id);
-            forward = LIST_USER;
-            request.setAttribute("meals", storage.getAllMeals());
-        } else if (action.equalsIgnoreCase("edit")) {
-            if (storage.getAllMeals().isEmpty()) {
-                Meal empty = storage.add(new Meal(MealStorage.generatedId(), LocalDateTime.now(), "", 0));
-                forward = INSERT_OR_EDIT;
-                request.setAttribute("meal", empty);
-            } else {
-                String idParam = request.getParameter("id");
-                if (idParam != null && !idParam.isEmpty()) {
-                    int id = Integer.parseInt(idParam);
-                    Meal meal = storage.get(id);
-                    if (meal != null) {
-                        forward = INSERT_OR_EDIT;
-                        request.setAttribute("meal", meal);
-                    }
-                }
-            }
-        } else if (action.equalsIgnoreCase("meals")) {
-            Map<LocalDate, Integer> caloriesSumByDate = storage.getAllMeals().stream()
-                    .collect(
-                            Collectors.groupingBy(Meal::getDate, Collectors.summingInt(Meal::getCalories)));
-            List<MealTo> mealTo = storage.getAllMeals().stream().map(meal ->
-                    new MealTo(meal.getId(), meal.getDateTime(), meal.getDescription(), meal.getCalories(), caloriesSumByDate.get(meal.getDate()) > CALORIES_PER_DAY))
-                    .collect(Collectors.toList());
-            log.debug("redirect forward to meals");
-            forward = LIST_USER;
-            request.setAttribute("meals", mealTo);
-        } else {
-            forward = INSERT_OR_EDIT;
+        switch (action == null ? "all" : action) {
+            case "delete":
+                int id = getId(request);
+                log.info("Delete id={}", id);
+                repository.delete(id);
+                response.sendRedirect("meals");
+                break;
+            case "create":
+            case "update":
+                final Meal meal = "create".equals(action) ?
+                        new Meal(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES), "", 1000) :
+                        repository.get(getId(request));
+                request.setAttribute("meal", meal);
+                request.getRequestDispatcher("/editMeal.jsp").forward(request, response);
+                break;
+            case "all":
+            default:
+                log.info("getAll");
+                request.setAttribute("meals", MealsUtil.getTos(repository.getAll(), MealsUtil.DEFAULT_CALORIES_PER_DAY));
+                request.getRequestDispatcher("/meals.jsp").forward(request, response);
+                break;
         }
+    }
 
-        RequestDispatcher view = request.getRequestDispatcher(forward);
-        view.forward(request, response);
+    private int getId(HttpServletRequest request) {
+        String paramId = Objects.requireNonNull(request.getParameter("id"));
+        return Integer.parseInt(paramId);
     }
 }
 
