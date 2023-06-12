@@ -1,46 +1,77 @@
 package ru.javawebinar.topjava.repository.inmemory;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.repository.MealRepository;
 import ru.javawebinar.topjava.util.MealsUtil;
 
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class InMemoryMealRepository implements MealRepository {
-    private final Map<Integer, Meal> repository = new ConcurrentHashMap<>();
+    private static final Logger log = LoggerFactory.getLogger(InMemoryUserRepository.class);
+    private final Map<Integer, List<Meal>> repository = new ConcurrentHashMap<>();
     private final AtomicInteger counter = new AtomicInteger(0);
 
-    {
-        MealsUtil.meals.forEach(this::save);
-    }
 
     @Override
-    public Meal save(Meal meal) {
+    public Meal save(int userId, Meal meal) {
         if (meal.isNew()) {
             meal.setId(counter.incrementAndGet());
-            repository.put(meal.getId(), meal);
+            repository.computeIfAbsent(userId, key -> new ArrayList<>()).add(meal);
             return meal;
+        } else {
+            List<Meal> meals = getMealList(userId);
+            meals.stream()
+                    .filter(existing -> existing.getId().equals(meal.getId()))
+                    .findFirst()
+                    .ifPresent(existing -> {
+                        existing.setDateTime(meal.getDateTime());
+                        existing.setDescription(meal.getDescription());
+                        existing.setCalories(meal.getCalories());
+                    });
         }
-        // handle case: update, but not present in storage
-        return repository.computeIfPresent(meal.getId(), (id, oldMeal) -> meal);
+        return meal;
     }
 
     @Override
-    public boolean delete(int id) {
-        return repository.remove(id) != null;
+    public boolean delete(int userId, int id) {
+        log.info("Deleting meal with id {} for userId {}", id, userId);
+        List<Meal> meals = getMealList(userId);
+        Optional<Meal> mealToDelete = meals.stream()
+                .filter(meal -> meal.getId() == id)
+                .findFirst();
+        if (mealToDelete.isPresent()) {
+            meals.remove(mealToDelete.get());
+            return true;
+        }
+        return false;
     }
 
     @Override
-    public Meal get(int id) {
-        return repository.get(id);
+    public Meal get(int userId, int id) {
+        log.info("Getting meal with id {} for userId {}", id, userId);
+        List<Meal> meals = getMealList(userId);
+        for (Meal meal : meals) {
+            if (meal.getId() == id) {
+                return meal;
+            }
+        }
+        return null;
     }
 
     @Override
-    public Collection<Meal> getAll() {
-        return repository.values();
+    public Collection<Meal> getAll(int userId) {
+        log.info("Getting all meals for userId {}", userId);
+        List<Meal> meals = getMealList(userId);
+        meals.sort(Comparator.comparing(Meal::getDateTime).reversed());
+        return meals;
+    }
+
+    private List<Meal> getMealList(int userId) {
+       return repository.getOrDefault(userId, Collections.emptyList());
     }
 }
 
