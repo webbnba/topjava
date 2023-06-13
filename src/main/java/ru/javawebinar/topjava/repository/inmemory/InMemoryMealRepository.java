@@ -2,17 +2,21 @@ package ru.javawebinar.topjava.repository.inmemory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Repository;
 import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.repository.MealRepository;
+import ru.javawebinar.topjava.util.exception.NotFoundException;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+@Repository
 public class InMemoryMealRepository implements MealRepository {
     private static final Logger log = LoggerFactory.getLogger(InMemoryUserRepository.class);
     private final Map<Integer, ConcurrentHashMap<Integer, Meal>> repository = new ConcurrentHashMap<>();
@@ -41,9 +45,15 @@ public class InMemoryMealRepository implements MealRepository {
             return meal;
         } else {
             ConcurrentHashMap<Integer, Meal> meals = repository.get(userId);
-            meals.replace(meal.getId(), meal);
+            if(meals != null) {
+                Meal existingMeal = meals.get(meal.getId());
+                if(existingMeal != null) {
+                    meals.replace(meal.getId(), meal);
+                    return meal;
+                }
+            }
         }
-        return meal;
+       throw new NotFoundException("Meal not found or not owned by the user");
     }
 
     @Override
@@ -61,7 +71,13 @@ public class InMemoryMealRepository implements MealRepository {
     public Meal get(int userId, int id) {
         log.info("Getting meal with id {} for userId {}", id, userId);
         ConcurrentHashMap<Integer, Meal> meals = repository.get(userId);
-        return meals.getOrDefault(id, null);
+        if (meals != null) {
+            Meal meal = meals.get(id);
+            if (meal != null) {
+                return meals.getOrDefault(id, null);
+            }
+        }
+        throw new NotFoundException("Meal not found or not owned by the user");
     }
 
     @Override
