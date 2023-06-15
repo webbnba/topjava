@@ -18,6 +18,8 @@ import java.util.stream.Collectors;
 @Repository
 public class InMemoryUserRepository implements UserRepository {
     private static final Logger log = LoggerFactory.getLogger(InMemoryUserRepository.class);
+    public static final int USER_ID = 1;
+    public static final int ADMIN_ID = 2;
     private final Map<Integer, User> repository = new ConcurrentHashMap<>();
     private final AtomicInteger counter = new AtomicInteger(0);
 
@@ -48,8 +50,7 @@ public class InMemoryUserRepository implements UserRepository {
     public List<User> getAll() {
         log.info("getAll");
         return repository.values().stream()
-                .sorted(Comparator.comparing(AbstractNamedEntity::getName)
-                        .thenComparing(user -> ((User) user).getEmail()))
+                .sorted(Comparator.comparing(User::getName).thenComparing(User::getEmail))
                 .collect(Collectors.toList());
     }
 
