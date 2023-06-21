@@ -4,7 +4,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.util.StringUtils;
 import ru.javawebinar.topjava.model.Meal;
-import ru.javawebinar.topjava.web.meal.MealRestController;
+import ru.javawebinar.topjava.repository.jdbc.JdbcMealRepository;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -17,18 +17,17 @@ import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 
-import static ru.javawebinar.topjava.util.DateTimeUtil.parseLocalDate;
-import static ru.javawebinar.topjava.util.DateTimeUtil.parseLocalTime;
+import static ru.javawebinar.topjava.util.DateTimeUtil.*;
+import static ru.javawebinar.topjava.util.MealsUtil.*;
 
 public class MealServlet extends HttpServlet {
-
     private ConfigurableApplicationContext springContext;
-    private MealRestController mealController;
+    private JdbcMealRepository jdbcMealRepository;
 
     @Override
     public void init() {
         springContext = new ClassPathXmlApplicationContext("spring/spring-app.xml", "spring/spring-db.xml");
-        mealController = springContext.getBean(MealRestController.class);
+        jdbcMealRepository = springContext.getBean(JdbcMealRepository.class);
     }
 
     @Override
@@ -40,16 +39,18 @@ public class MealServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         request.setCharacterEncoding("UTF-8");
-        Meal meal = new Meal(
-                LocalDateTime.parse(request.getParameter("dateTime")),
-                request.getParameter("description"),
-                Integer.parseInt(request.getParameter("calories")));
+        String dateTimeParam = request.getParameter("dateTime");
+        String descriptionParam = request.getParameter("description");
+        String caloriesParam = request.getParameter("calories");
+        String idParam = request.getParameter("id");
 
-        if (StringUtils.hasLength(request.getParameter("id"))) {
-            mealController.update(meal, getId(request));
-        } else {
-            mealController.create(meal);
-        }
+        LocalDateTime dateTime = LocalDateTime.parse(dateTimeParam);
+        String description = StringUtils.hasLength(descriptionParam) ? descriptionParam : "";
+        int calories = StringUtils.hasLength(caloriesParam) ? Integer.parseInt(caloriesParam) : 0;
+        Integer id = StringUtils.hasLength(idParam) ? Integer.parseInt(idParam) : null;
+
+        Meal meal = new Meal(id, dateTime, description, calories);
+        jdbcMealRepository.save(meal, SecurityUtil.authUserId());
         response.sendRedirect("meals");
     }
 
@@ -60,28 +61,26 @@ public class MealServlet extends HttpServlet {
         switch (action == null ? "all" : action) {
             case "delete":
                 int id = getId(request);
-                mealController.delete(id);
+                jdbcMealRepository.delete(id, SecurityUtil.authUserId());
                 response.sendRedirect("meals");
                 break;
             case "create":
             case "update":
-                final Meal meal = "create".equals(action) ?
-                        new Meal(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES), "", 1000) :
-                        mealController.get(getId(request));
+                final Meal meal = "create".equals(action) ? new Meal(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES), "", 1000) : jdbcMealRepository.get(getId(request), SecurityUtil.authUserId());
                 request.setAttribute("meal", meal);
                 request.getRequestDispatcher("/mealForm.jsp").forward(request, response);
                 break;
             case "filter":
-                LocalDate startDate = parseLocalDate(request.getParameter("startDate"));
-                LocalDate endDate = parseLocalDate(request.getParameter("endDate"));
+                LocalDateTime startDate = atStartOfDayOrMin(LocalDate.parse(request.getParameter("startDate")));
+                LocalDateTime endDate = atStartOfNextDayOrMax(LocalDate.parse(request.getParameter("endDate")));
                 LocalTime startTime = parseLocalTime(request.getParameter("startTime"));
                 LocalTime endTime = parseLocalTime(request.getParameter("endTime"));
-                request.setAttribute("meals", mealController.getBetween(startDate, startTime, endDate, endTime));
+                request.setAttribute("meals", getFilteredTos(jdbcMealRepository.getBetweenHalfOpen(startDate, endDate, SecurityUtil.authUserId()), DEFAULT_CALORIES_PER_DAY, startTime, endTime));
                 request.getRequestDispatcher("/meals.jsp").forward(request, response);
                 break;
             case "all":
             default:
-                request.setAttribute("meals", mealController.getAll());
+                request.setAttribute("meals", getTos(jdbcMealRepository.getAll(SecurityUtil.authUserId()), DEFAULT_CALORIES_PER_DAY));
                 request.getRequestDispatcher("/meals.jsp").forward(request, response);
                 break;
         }
