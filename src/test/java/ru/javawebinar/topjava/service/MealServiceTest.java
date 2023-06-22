@@ -52,11 +52,12 @@ public class MealServiceTest {
 
     @Test
     public void getBetweenInclusive() {
-        LocalDate startDate = LocalDate.of(2023, 6, 18);
-        LocalDate endDateTime = LocalDate.of(2023, 6, 19);
-        List<Meal> meals = service.getBetweenInclusive(startDate, endDateTime, USER_ID);
+        LocalDate startDate = LocalDate.of(2023, 6, 19);
+        LocalDate endDate = LocalDate.of(2023, 6, 19);
+        List<Meal> meals = service.getBetweenInclusive(startDate, endDate, USER_ID);
         Assertions.assertThat(meals).isNotNull();
         Assertions.assertThat(meals).hasSize(3);
+        assertMatch(meals, meal3, meal2, meal1);
     }
 
     @Test
