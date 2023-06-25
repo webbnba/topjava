@@ -1,12 +1,10 @@
 package ru.javawebinar.topjava.service;
 
-import org.junit.AfterClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
-import org.junit.runner.Result;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -34,7 +32,6 @@ import static ru.javawebinar.topjava.UserTestData.USER_ID;
 @RunWith(SpringRunner.class)
 @Sql(scripts = "classpath:db/populateDB.sql", config = @SqlConfig(encoding = "UTF-8"))
 public class MealServiceTest {
-    private static Result result;
     private static final Map<String, Long> testTimes = new HashMap<>();
     @Autowired
     private MealService service;
@@ -43,12 +40,15 @@ public class MealServiceTest {
     public TestRule watcher = new TestWatcher() {
         @Override
         protected void starting(Description description) {
-            System.out.println("Starting test: " + description.getMethodName());
+            testTimes.put(description.getMethodName(), System.currentTimeMillis());
         }
 
         @Override
         protected void finished(Description description) {
             System.out.println("Finished test: " + description.getMethodName());
+            long executionTime = System.currentTimeMillis() - testTimes.get(description.getMethodName());
+            System.out.println(description.getMethodName() + " - Execution time: " + executionTime + "ms" +
+                               "\n------------------------------------------------");
         }
     };
 
@@ -130,15 +130,4 @@ public class MealServiceTest {
     public void getBetweenWithNullDates() {
         MEAL_MATCHER.assertMatch(service.getBetweenInclusive(null, null, USER_ID), meals);
     }
-
-    @AfterClass
-    public static void printSummary() {
-        System.out.println("Test Summary:");
-        for (Map.Entry<String, Long> entry : testTimes.entrySet()) {
-            String testName = entry.getKey();
-            Long executionTime = entry.getValue();
-            System.out.println(testName + " - Execution time: " + executionTime + "ms");
-        }
-    }
-
 }
