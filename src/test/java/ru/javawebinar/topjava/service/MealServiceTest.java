@@ -1,10 +1,10 @@
 package ru.javawebinar.topjava.service;
 
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
-import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
+import org.junit.rules.ExternalResource;
+import org.junit.rules.Stopwatch;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -12,13 +12,12 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit4.SpringRunner;
+import ru.javawebinar.topjava.TestTimeRules;
 import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.util.exception.NotFoundException;
 
 import java.time.LocalDate;
 import java.time.Month;
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.junit.Assert.assertThrows;
 import static ru.javawebinar.topjava.MealTestData.*;
@@ -32,25 +31,14 @@ import static ru.javawebinar.topjava.UserTestData.USER_ID;
 @RunWith(SpringRunner.class)
 @Sql(scripts = "classpath:db/populateDB.sql", config = @SqlConfig(encoding = "UTF-8"))
 public class MealServiceTest {
-    private static final Map<String, Long> testTimes = new HashMap<>();
     @Autowired
     private MealService service;
 
-    @Rule
-    public TestRule watcher = new TestWatcher() {
-        @Override
-        protected void starting(Description description) {
-            testTimes.put(description.getMethodName(), System.currentTimeMillis());
-        }
+    @ClassRule
+    public static ExternalResource summary = TestTimeRules.SUMMARY;
 
-        @Override
-        protected void finished(Description description) {
-            System.out.println("Finished test: " + description.getMethodName());
-            long executionTime = System.currentTimeMillis() - testTimes.get(description.getMethodName());
-            System.out.println(description.getMethodName() + " - Execution time: " + executionTime + "ms" +
-                               "\n------------------------------------------------");
-        }
-    };
+    @Rule
+    public Stopwatch stopwatch = TestTimeRules.STOPWATCH;
 
     @Test
     public void delete() {
