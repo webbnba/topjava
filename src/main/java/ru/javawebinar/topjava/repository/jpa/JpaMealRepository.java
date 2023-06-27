@@ -1,5 +1,6 @@
 package ru.javawebinar.topjava.repository.jpa;
 
+import org.springframework.dao.support.DataAccessUtils;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import ru.javawebinar.topjava.model.Meal;
@@ -36,17 +37,25 @@ public class JpaMealRepository implements MealRepository {
     }
 
     @Override
+    public Meal get(int id, int userId) {
+        return findMealByIdAndUser(id, userId);
+    }
+
+    private Meal findMealByIdAndUser(int id, int userId) {
+        List<Meal> resultList = em.createNamedQuery(Meal.GET, Meal.class)
+                .setParameter("id", id)
+                .setParameter("userId", userId)
+                .getResultList();
+        return DataAccessUtils.singleResult(resultList);
+    }
+
+    @Override
     @Transactional
     public boolean delete(int id, int userId) {
         return em.createNamedQuery(Meal.DELETE)
                        .setParameter("id", id)
                        .setParameter("userId", userId)
                        .executeUpdate() > 0;
-    }
-
-    @Override
-    public Meal get(int id, int userId) {
-        return findMealByIdAndUser(id, userId);
     }
 
     @Override
@@ -63,14 +72,5 @@ public class JpaMealRepository implements MealRepository {
                 .setParameter("endDateTime", endDateTime)
                 .setParameter("userId", userId)
                 .getResultList();
-    }
-
-    private Meal findMealByIdAndUser(int id, int userId) {
-        return em.createNamedQuery(Meal.GET, Meal.class)
-                .setParameter("id", id)
-                .setParameter("userId", userId)
-                .getResultStream()
-                .findFirst()
-                .orElse(null);
     }
 }
