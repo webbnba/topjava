@@ -34,11 +34,12 @@ public class MealServiceTest {
 
     @ClassRule
     public static ExternalResource summary = TestTimeRules.SUMMARY;
-    @Autowired
-    private MealService service;
 
     @Rule
     public Stopwatch stopwatch = TestTimeRules.STOPWATCH;
+
+    @Autowired
+    private MealService service;
 
     @Test
     public void delete() {
