@@ -12,17 +12,10 @@ import ru.javawebinar.topjava.service.UserService;
 import javax.servlet.http.HttpServletRequest;
 
 @Controller
-public class RootController {
+public class RootController extends AbstractController {
     private static final Logger log = LoggerFactory.getLogger(RootController.class);
-
     @Autowired
     private UserService service;
-
-    @GetMapping("/")
-    public String root() {
-        log.info("root");
-        return "index";
-    }
 
     @GetMapping("/users")
     public String getUsers(Model model) {
@@ -36,6 +29,6 @@ public class RootController {
         int userId = Integer.parseInt(request.getParameter("userId"));
         log.info("setUser {}", userId);
         SecurityUtil.setAuthUserId(userId);
-        return "redirect:meals";
+        return "redirect:/meals";
     }
 }
