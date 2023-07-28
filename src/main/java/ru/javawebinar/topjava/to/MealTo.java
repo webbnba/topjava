@@ -1,6 +1,8 @@
 package ru.javawebinar.topjava.to;
 
+import java.beans.ConstructorProperties;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 public class MealTo {
     private final Integer id;
@@ -13,7 +15,12 @@ public class MealTo {
 
     private final boolean excess;
 
-    public MealTo(Integer id, LocalDateTime dateTime, String description, int calories, boolean excess) {
+    @ConstructorProperties({"id", "dateTime", "description", "calories", "excess"})
+    public MealTo(Integer id,
+                  LocalDateTime dateTime,
+                  String description,
+                  int calories,
+                  boolean excess) {
         this.id = id;
         this.dateTime = dateTime;
         this.description = description;
@@ -42,13 +49,32 @@ public class MealTo {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        MealTo mealTo = (MealTo) o;
+
+        if (calories != mealTo.calories) return false;
+        if (excess != mealTo.excess) return false;
+        if (!id.equals(mealTo.id)) return false;
+        if (!dateTime.equals(mealTo.dateTime)) return false;
+        return description.equals(mealTo.description);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, dateTime, description, calories, excess);
+    }
+
+    @Override
     public String toString() {
         return "MealTo{" +
-                "id=" + id +
-                ", dateTime=" + dateTime +
-                ", description='" + description + '\'' +
-                ", calories=" + calories +
-                ", excess=" + excess +
-                '}';
+               "id=" + id +
+               ", dateTime=" + dateTime +
+               ", description='" + description + '\'' +
+               ", calories=" + calories +
+               ", excess=" + excess +
+               '}';
     }
 }
