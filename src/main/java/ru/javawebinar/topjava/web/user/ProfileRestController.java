@@ -12,10 +12,6 @@ import static ru.javawebinar.topjava.web.SecurityUtil.authUserId;
 public class ProfileRestController extends AbstractUserController {
     static final String REST_URL = "/rest/profile";
 
-    public String testUTF() {
-        return "Русский текст";
-    }
-
     @GetMapping("/with-meals")
     public User getWithMeals() {
         return super.getWithMeals(authUserId());
