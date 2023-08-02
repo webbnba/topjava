@@ -112,13 +112,13 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="description" class="col-form-label>"><spring:message code="meal.dateTime"/></label>
+                        <label for="description" class="col-form-label>"><spring:message code="meal.description"/></label>
                         <input type="text" class="form-control" id="description" name="description"
                                placeholder="<spring:message code="meal.description"/>">
                     </div>
 
                     <div class="form-group">
-                        <label for="calories" class="col-form-label>"><spring:message code="meal.dateTime"/></label><input type="text" class="form-control" id="calories" name="calories"
+                        <label for="calories" class="col-form-label>"><spring:message code="meal.calories"/></label><input type="text" class="form-control" id="calories" name="calories"
                                                                                                                            placeholder="<spring:message code="meal.calories"/>">
                     </div>
                 </form>
