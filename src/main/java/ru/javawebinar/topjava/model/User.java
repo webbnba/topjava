@@ -154,12 +154,12 @@ public class User extends AbstractNamedEntity {
     @Override
     public String toString() {
         return "User{" +
-               "id=" + id +
-               ", email=" + email +
-               ", name=" + name +
-               ", enabled=" + enabled +
-               ", roles=" + roles +
-               ", caloriesPerDay=" + caloriesPerDay +
-               '}';
+                "id=" + id +
+                ", email=" + email +
+                ", name=" + name +
+                ", enabled=" + enabled +
+                ", roles=" + roles +
+                ", caloriesPerDay=" + caloriesPerDay +
+                '}';
     }
 }
