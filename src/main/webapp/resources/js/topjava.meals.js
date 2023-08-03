@@ -47,8 +47,8 @@ $(document).ready(function () {
             url: ctx.ajaxUrl + "filter",
             data: formData,
             dataType: "json",
-            success: function (response) {
-                ctx.datatableApi.clear().rows.add(response).draw();
+            success: function (data) {
+                ctx.datatableApi.clear().rows.add(data).draw();
             }
         });
     });
