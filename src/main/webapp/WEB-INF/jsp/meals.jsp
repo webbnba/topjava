@@ -5,7 +5,6 @@
 <html>
 <jsp:include page="fragments/headTag.jsp"/>
 <body>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
 <script src="resources/js/topjava.common.js" defer></script>
 <script src="resources/js/topjava.meals.js" defer></script>
 <jsp:include page="fragments/bodyHeader.jsp"/>
@@ -28,7 +27,7 @@
                     <spring:message code="meal.endDate"/>
                 </label>
                 <div class="col-sm-10">
-                    <input type="date" name="endDate" id="endDate" class="form-control" value="${param.endDate}">
+                    <input type="date" name="endDate" id="endDate" class="form-control">
                 </div>
             </div>
             <div class="form-group row">
@@ -36,7 +35,7 @@
                     <spring:message code="meal.startTime"/>
                 </label>
                 <div class="col-sm-10">
-                    <input type="time" name="startTime" id="startTime" class="form-control" value="${param.startTime}">
+                    <input type="time" name="startTime" id="startTime" class="form-control">
                 </div>
             </div>
             <div class="form-group row">
@@ -44,7 +43,7 @@
                     <spring:message code="meal.endTime"/>
                 </label>
                 <div class="col-sm-10">
-                    <input type="time" name="endTime" id="endTime" class="form-control" value="${param.endTime}">
+                    <input type="time" name="endTime" id="endTime" class="form-control">
                 </div>
             </div>
             <div class="form-group row">
@@ -77,7 +76,7 @@
             </thead>
             <c:forEach items="${requestScope.meals}" var="meal">
                 <jsp:useBean id="meal" type="ru.javawebinar.topjava.to.MealTo"/>
-                <tr id="${meal.id}">
+                <tr data-meal-excess="${meal.excess}" id="${meal.id}">
                     <td>
                             <%--${meal.dateTime.toLocalDate()} ${meal.dateTime.toLocalTime()}--%>
                             <%--<%=TimeUtil.toString(meal.getDateTime())%>--%>
@@ -112,14 +111,16 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="description" class="col-form-label>"><spring:message code="meal.description"/></label>
+                        <label for="description" class="col-form-label>"><spring:message
+                                code="meal.description"/></label>
                         <input type="text" class="form-control" id="description" name="description"
                                placeholder="<spring:message code="meal.description"/>">
                     </div>
 
                     <div class="form-group">
-                        <label for="calories" class="col-form-label>"><spring:message code="meal.calories"/></label><input type="text" class="form-control" id="calories" name="calories"
-                                                                                                                           placeholder="<spring:message code="meal.calories"/>">
+                        <label for="calories" class="col-form-label>"><spring:message code="meal.calories"/></label>
+                        <input type="number" class="form-control" id="calories" name="calories"
+                               placeholder="<spring:message code="meal.calories"/>">
                     </div>
                 </form>
 

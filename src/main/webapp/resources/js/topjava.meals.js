@@ -38,8 +38,8 @@ $(function () {
     );
 });
 
-$(document).ready(function() {
-    $("#filterButton").on("click", function() {
+$(document).ready(function () {
+    $("#filterButton").on("click", function () {
         let formData = $("#filterForm").serialize();
 
         $.ajax({
@@ -47,20 +47,8 @@ $(document).ready(function() {
             url: ctx.ajaxUrl + "filter",
             data: formData,
             dataType: "json",
-            success: function(response) {
-                let tableBody = $("#dataTable").find("tbody");
-                tableBody.empty();
-
-                for (let i = 0; i < response.length; i++) {
-                    let meal = response[i];
-                    let row = $("<tr>");
-                    row.append("<td>" + moment(meal.dateTime).format("YYYY-MM-DD HH:mm") + "</td>");
-                    row.append("<td>" + meal.description + "</td>");
-                    row.append("<td>" + meal.calories + "</td>");
-                    row.append("<td><a><span class='fa fa-pencil'></span></a></td>");
-                    row.append("<td><a class='delete'><span class='fa fa-remove'></span></a></td>");
-                    tableBody.append(row);
-                }
+            success: function (response) {
+                ctx.datatableApi.clear().rows.add(response).draw();
             }
         });
     });
